@@ -21,23 +21,24 @@ public class Solution {
                 System.out.println();
             }
 
-            String[] numbersAsStrings = new String[5000];
+            NumberObject[] numbersAsStrings = new NumberObject[2000];
             populateNumbersArray(numbersAsStrings, charArray);
+            System.out.println(numbersAsStrings.length);
 //            int result = ver1(charArray, numbersAsStrings);
 //            System.out.println(result);
-            HashMap<Integer, Integer> asterixMap = new HashMap<>();
+            HashMap<Integer, AsterixObject> asterixMap = new HashMap<>();
             ver2(charArray, numbersAsStrings, asterixMap);
             int sum2 = 0;
-            int len = 0;
-            System.out.println(asterixMap);
-            for (int value: asterixMap.values()) {
 
-                sum2 += value / 1000;
-                len++;
+            System.out.println(asterixMap);
+            for (AsterixObject object: asterixMap.values()) {
+
+                if (object.numberOfNeighbours == 2) {
+                    sum2 += object.value;
+                }
+
             }
             System.out.println("Problem2 = " + sum2);
-            System.out.println(len);
-
 
 
         } catch (IOException e) {
@@ -69,7 +70,7 @@ public class Solution {
     }
 
     // 80918939 vs 82301120
-    private static void checkIsPart2(int rowNumber, int colNumber, int stringLen, String string, char[][] array, HashMap<Integer, Integer> asterixMap) {
+    private static void checkIsPart2(int rowNumber, int colNumber, int stringLen, String string, char[][] array, HashMap<Integer, AsterixObject> asterixMap) {
 
         int statingRowNumber = rowNumber > 0 ? rowNumber - 1 : rowNumber;
         int startingColNumber = colNumber > 0 ? colNumber - 1 : colNumber;
@@ -82,12 +83,15 @@ public class Solution {
                 System.out.print(array[row][col]);
                 if (array[row][col] == '*' && !(row == rowNumber && (col >= colNumber && col < colNumber + stringLen))) {
                     if (asterixMap.get(row * array[0].length + col) == null) {
-                        asterixMap.put(row * array[0].length + col, Integer.parseInt(string));
+                        asterixMap.put(row * array[0].length + col, new AsterixObject(row * array[0].length + col,
+                                1, Integer.parseInt(string)));
                         System.out.println("Added " + string + " to * at " + row * array[0].length + col);
 
-                    } else if (asterixMap.get(row * array[0].length + col) < 1000) {
+                    } else  {
+                        AsterixObject current = asterixMap.get(row * array[0].length + col);
                         System.out.println("Multiplied " + string + " to * at " + row * array[0].length + col);
-                        asterixMap.put(row * array[0].length + col, (asterixMap.get(row * array[0].length + col) * Integer.parseInt(string)) * 1000);
+                        asterixMap.put(row * array[0].length + col, new AsterixObject(current.position,
+                                current.getNumberOfNeighbours() + 1, current.getValue() * Integer.parseInt(string)));
                     }
                 }
 
@@ -129,51 +133,35 @@ public class Solution {
         return sum;
     }
 
-    private static Integer ver2(char[][] charArray, String[] numbersAsStrings, HashMap<Integer, Integer> asterixMap) {
-        int searchIndex = 0;
-        int sum = 0;
-        for (int row = 0; row < charArray.length; row++) {
+    private static void ver2(char[][] charArray, NumberObject[] numbers, HashMap<Integer, AsterixObject> asterixMap) {
 
-            String searchNumber = numbersAsStrings[searchIndex];
-            String rowInString = new String(charArray[row]);
-
-            int foundIndex = 0;
-            while ((foundIndex = foundIndex + rowInString.substring(foundIndex).indexOf(searchNumber)) != -1) {
-
-            checkIsPart2(row, foundIndex, searchNumber.length(), searchNumber, charArray, asterixMap);
-                searchNumber = numbersAsStrings[++searchIndex];
-                if (searchNumber == "\n" || searchNumber == null) {
-                    searchIndex++;
-                    break;
-                }
-
-
+        for (NumberObject object: numbers) {
+            if (object == null) {
+                break;
             }
-
-
+            String numberInString = String.valueOf(object.number);
+            checkIsPart2(object.rowPos, object.colPos, numberInString.length(), numberInString, charArray, asterixMap);
         }
-        return sum;
     }
 
 
-    private static void populateNumbersArray(String[] numbers, char[][] charArray) {
+    private static void populateNumbersArray(NumberObject[] numbers, char[][] charArray) {
         int numberIndex = 0;
-        for (char[] row : charArray) {
+        for (int row = 0; row < charArray.length; row++) {
             String numberStr = "";
-            for (char ch : row) {
-                if (ch >= '0' && ch <= '9') {
-                    numberStr += String.valueOf(ch);
+            for (int col = 0; col < charArray[row].length; col++) {
+                if (charArray[row][col] >= '0' && charArray[row][col] <= '9') {
+                    numberStr += String.valueOf(charArray[row][col]);
                 }
-                if (numberStr.length() > 0 && !(ch >= '0' && ch <= '9')) {
-                    numbers[numberIndex++] = numberStr;
+                if (numberStr.length() > 0 && !(charArray[row][col] >= '0' && charArray[row][col] <= '9')) {
+                    numbers[numberIndex++] = new NumberObject(Integer.parseInt(numberStr), row, col - numberStr.length());
                     numberStr = "";
                 }
             }
             if (numberStr.length() > 0) {
-                numbers[numberIndex++] = numberStr;
+                numbers[numberIndex++] = new NumberObject(Integer.parseInt(numberStr), row, charArray[row].length - numberStr.length());
 
             }
-            numbers[numberIndex++] = "\n";
         }
     }
 
